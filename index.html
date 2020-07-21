@@ -11,11 +11,31 @@
 <body>
 
 	<div id="app">
-		<div class="endpoint">
-			<h2>Endpoints</h2>
-			<input type="text" v-model="endpoint">
-			<v-select :options="entities" multiple v-model="endpointEntities" taggable></v-select>
-		</div>
+		<fieldset>
+			<legend>Endpoint:</legend>
+			<p>Path: <input type="text" v-model="endpoint"></p>
+			<label>Entities</label>
+			<v-select :options="entities" v-model="endpointEntities" 
+				multiple taggable></v-select>
+		</fieldset>
+
+		<fieldset>
+			<legend>HTTP Methods</legend>
+			<label><input type="checkbox">GET</label>
+			<label><input type="checkbox">POST</label>
+		</fieldset>
+		
+		<fieldset>
+			<legend>Query Params</legend>
+		</fieldset>
+
+		<fieldset>
+			<legend>Request Headers</legend>
+		</fieldset>
+
+		<fieldset>
+			<legend>Response Body</legend>
+		</fieldset>
 	</div>
 
 	<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
