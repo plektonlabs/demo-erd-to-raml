@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>DPS</title>
+
+	<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+	<meta content="utf-8" http-equiv="encoding">
+
+	<link rel="stylesheet" href="https://unpkg.com/vue-select@latest/dist/vue-select.css">
+</head>
+<body>
+
+	<div id="app">
+		<div class="endpoint">
+			<h2>Endpoints</h2>
+			<input type="text" v-model="endpoint">
+			<v-select :options="entities" multiple v-model="endpointEntities" taggable></v-select>
+		</div>
+	</div>
+
+	<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/vue"></script>
+	<script src="https://unpkg.com/vue-select@latest"></script>
+
+	<script type="text/javascript">
+		Vue.component('v-select', VueSelect.VueSelect);
+
+		var app = new Vue({
+  			el: '#app',
+  			data: {
+    			endpoint: '',
+    			endpointEntities: [],
+    			entities: ['doctor', 'patient', 'person', 'symptoms', 'diagnosis', 'appointment']
+  			},
+  			watch: {
+  				endpoint: function (n, o) {
+  					var tokens = n.split('/');
+  					if (tokens.length>0) {
+	  					var selected = [];
+	  					for (var i=0; i<=tokens.length; i++) {
+	  						if (this.entities.indexOf(tokens[i])>-1) {
+	  							selected.push(tokens[i]);
+	  						}
+	  					}
+	  					this.endpointEntities = selected;
+  					}
+  				}
+  			}
+		});
+	</script>
+
+</body>
+</html>
