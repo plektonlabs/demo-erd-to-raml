@@ -9,6 +9,37 @@
 
 	<link rel="stylesheet" href="https://unpkg.com/vue-select@latest/dist/vue-select.css">
 
+	<style>
+		body {
+			font-family: "Lucida Console", Courier, monospace;
+		}
+
+		fieldset {
+			border-radius: 5px;
+			border: 1px solid #444444;
+			margin-bottom: 20px;
+		}
+
+		legend {
+			padding: 0.2em 0.5em;
+			border: 1px solid #444444;
+			color: #444444;
+			font-size: 90%;
+			text-align: right;
+		}
+
+		button {
+			background-color: #4CAF50;
+			/* Green */
+			border: none;
+			color: white;
+			padding: 15px 32px;
+			text-align: center;
+			text-decoration: none;
+			display: inline-block;
+			font-size: 16px;
+		}
+	</style>
 </head>
 
 <body>
@@ -23,8 +54,13 @@
 
 		<fieldset>
 			<legend>HTTP Methods</legend>
-			<label><input type="checkbox">GET</label>
-			<label><input type="checkbox">POST</label>
+			<label><input type="radio" value="get" v-model="httpMethod">GET</label>
+			<label><input type="radio" value="post" v-model="httpMethod">POST</label>
+		</fieldset>
+
+		<fieldset>
+			<legend>Request Params</legend>
+			<v-select v-model="requestParams" multiple taggable></v-select>
 		</fieldset>
 
 		<fieldset>
@@ -34,6 +70,7 @@
 
 		<fieldset>
 			<legend>Request Headers</legend>
+			<v-select v-model="requestHeaders" multiple taggable pushTags></v-select>
 		</fieldset>
 
 		<fieldset>
@@ -55,11 +92,16 @@
 				</details>
 			</container>
 		</fieldset>
+
+		<button v-on:click="generateRAML">Generate RAML</button>
 	</div>
 
 	<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/vue"></script>
 	<script src="https://unpkg.com/vue-select@latest"></script>
+
+	<script src="https://cdn.jsdelivr.net/npm/esprima@4.0.1/dist/esprima.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/3.14.0/js-yaml.min.js"></script>
 
 	<script type="text/javascript">
 		Vue.component('v-select', VueSelect.VueSelect);
@@ -67,13 +109,66 @@
 		var app = new Vue({
 			el: '#app',
 			data: {
-				endpoint: '',
-				endpointEntities: [],
 				entities: [],
 				schema: {},
+				endpoint: '',
+				endpointEntities: [],
+				httpMethod: 'get',
+				requestParams: [],
 				requestQueries: [],
 				requestQueryOptions: [],
+				requestHeaders: [],
 				responseBody: {}
+			},
+			methods: {
+				download: function (text) {
+					var element = document.createElement('a');
+					element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+					element.setAttribute('download', 'test.yml');
+
+					element.style.display = 'none';
+					document.body.appendChild(element);
+
+					element.click();
+
+					document.body.removeChild(element);
+				},
+				generateRAML: function () {
+					var json = {
+						'title': 'A demo RAML definition',
+						'mediaType': 'application/json'
+					};
+					var endpointJson = {}
+					if (this.requestParams.length > 0) {
+						var params = {}
+						for (var i = 0; i < this.requestParams.length; i++) {
+							params[this.requestParams[i]] = {
+								type: 'string',
+								required: true
+							}
+						}
+						endpointJson['uriParameters'] = params;
+					}
+
+					var resp = {
+						"response": {
+							"200": {
+								"body": {
+									"application/json": {
+										"type": ""
+									}
+								}
+							}
+						}
+					};
+					endpointJson[this.httpMethod] = resp;
+
+					json[this.endpoint] = endpointJson;
+
+					var raml = jsyaml.safeDump(json);
+					console.log(raml);
+					this.download(raml);
+				}
 			},
 			created: function () {
 				var that = this;
@@ -87,12 +182,20 @@
 					var tokens = n.split('/');
 					if (tokens.length > 0) {
 						var endpointEntities = [];
+						var requestParams = [];
 						for (var i = 0; i <= tokens.length; i++) {
-							if (this.entities.indexOf(tokens[i]) > -1) {
-								endpointEntities.push(tokens[i]);
+							var token = tokens[i];
+							if (token && token.length > 0) {
+								if (this.entities.indexOf(token) > -1) {
+									endpointEntities.push(token);
+								}
+								if (token.startsWith('{') && token.endsWith('}')) {
+									requestParams.push(token.substr(1, token.length - 2));
+								}
 							}
 						}
 						this.endpointEntities = endpointEntities;
+						this.requestParams = requestParams;
 					}
 				},
 				endpointEntities: function (n, o) {
