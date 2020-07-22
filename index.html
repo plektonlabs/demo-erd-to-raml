@@ -43,6 +43,10 @@
 		.strikethrough {
 			text-decoration: line-through;
 		}
+
+		ul {
+			list-style: none;
+		}
 	</style>
 </head>
 
@@ -83,17 +87,30 @@
 				<details v-for="e in Object.keys(responseBody)">
 					<summary>{{e}}</summary>
 					<ul>
-						<li v-for="r in Object.keys(responseBody[e])"
-							v-bind:class="{'strikethrough': !responseBody[e][r].include}">
-							<label>
-								<input type="checkbox" v-model="responseBody[e][r].include">
-								{{r}}
-							</label>
-							<span v-if="responseBody[e][r].ref">
-								+
-							</span>
+						<li v-for="r in Object.keys(responseBody[e])">
+							<template v-if="responseBody[e][r].expandable">
+								<details>
+									<summary>
+										{{responseBody[e][r].ref}}
+									</summary>
+									<ul>
+										<li v-for="r in Object.keys(responseBody[e][r].child)">
+											{{r}}
+										</li>
+									</ul>
+								</details>
+							</template>
+							<template else>
+								<label>
+									<input type="checkbox" v-model="responseBody[e][r].include">
+									{{r}}
+								</label>
+							</template>
 						</li>
 					</ul>
+				</details>
+				</li>
+				</ul>
 				</details>
 			</container>
 		</fieldset>
@@ -213,6 +230,11 @@
 							for (var j = 0; j < fields.length; j++) {
 								var field = fields[j];
 								responseBody[n[i]][field]['include'] = true;
+								responseBody[n[i]][field]['expandable'] = typeof responseBody[n[i]][field]['ref'] != 'undefined';
+								responseBody[n[i]][field]['collapsed'] = true;
+								if (responseBody[n[i]][field]['expandable']) {
+									responseBody[n[i]][field]['child'] = this.schema[responseBody[n[i]][field]['ref']];
+								}
 							}
 							requestQueryOptions = requestQueryOptions.concat(Object.keys(this.schema[n[i]]));
 						}
