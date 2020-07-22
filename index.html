@@ -39,6 +39,10 @@
 			display: inline-block;
 			font-size: 16px;
 		}
+
+		.strikethrough {
+			text-decoration: line-through;
+		}
 	</style>
 </head>
 
@@ -79,14 +83,15 @@
 				<details v-for="e in Object.keys(responseBody)">
 					<summary>{{e}}</summary>
 					<ul>
-						<li v-for="r in Object.keys(responseBody[e])">
-							<div>
+						<li v-for="r in Object.keys(responseBody[e])"
+							v-bind:class="{'strikethrough': !responseBody[e][r].include}">
+							<label>
+								<input type="checkbox" v-model="responseBody[e][r].include">
 								{{r}}
-								<span v-show="typeof responseBody[e][r].ref !== 'undefined'">
-									<input type="checkbox"
-										@change="expandEntity($event.target.checked, responseBody[e][r].ref)" />
-								</span>
-							</div>
+							</label>
+							<span v-if="responseBody[e][r].ref">
+								+
+							</span>
 						</li>
 					</ul>
 				</details>
@@ -204,9 +209,15 @@
 					for (var i = 0; i < n.length; i++) {
 						if (Object.keys(this.schema).indexOf(n[i]) > -1) {
 							responseBody[n[i]] = this.schema[n[i]];
+							var fields = Object.keys(responseBody[n[i]]);
+							for (var j = 0; j < fields.length; j++) {
+								var field = fields[j];
+								responseBody[n[i]][field]['include'] = true;
+							}
 							requestQueryOptions = requestQueryOptions.concat(Object.keys(this.schema[n[i]]));
 						}
 					}
+					console.log(JSON.stringify(responseBody))
 					this.requestQueryOptions = requestQueryOptions;
 					this.responseBody = responseBody;
 				}
