@@ -1,0 +1,29 @@
+{
+    "person": {
+        "person_id": {},
+        "sex": {},
+        "date_of_birth": {},
+        "occupation": {}
+    },
+    "doctor": {
+        "doctor_id": {},
+        "person_id": {"ref": "person"},
+        "doctor_registration_number": {}
+    },
+    "patient": {
+        "patent_id": {},
+        "person_id": {"ref": "person"}
+    },
+    "appointment": {
+        "appointment_id": {},
+        "doctor_id": {"ref": "doctor"},
+        "patient_id": {"ref": "patient"},
+        "appointment_status": {}
+    },
+    "diagnosis": {
+        "diagnosis_id": {},
+        "appointment_id": {"ref": "appointment"},
+        "name": {},
+        "diagnosis_date": {}
+    }
+}

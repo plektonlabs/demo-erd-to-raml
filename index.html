@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
 	<title>DPS</title>
 
@@ -7,7 +8,9 @@
 	<meta content="utf-8" http-equiv="encoding">
 
 	<link rel="stylesheet" href="https://unpkg.com/vue-select@latest/dist/vue-select.css">
+
 </head>
+
 <body>
 
 	<div id="app">
@@ -15,8 +18,7 @@
 			<legend>Endpoint:</legend>
 			<p>Path: <input type="text" v-model="endpoint"></p>
 			<label>Entities</label>
-			<v-select :options="entities" v-model="endpointEntities" 
-				multiple taggable></v-select>
+			<v-select :options="entities" v-model="endpointEntities" multiple taggable></v-select>
 		</fieldset>
 
 		<fieldset>
@@ -24,9 +26,10 @@
 			<label><input type="checkbox">GET</label>
 			<label><input type="checkbox">POST</label>
 		</fieldset>
-		
+
 		<fieldset>
 			<legend>Query Params</legend>
+			<v-select :options="requestQueryOptions" v-model="requestQueries" multiple taggable></v-select>
 		</fieldset>
 
 		<fieldset>
@@ -35,6 +38,22 @@
 
 		<fieldset>
 			<legend>Response Body</legend>
+			<container>
+				<details v-for="e in Object.keys(responseBody)">
+					<summary>{{e}}</summary>
+					<ul>
+						<li v-for="r in Object.keys(responseBody[e])">
+							<div>
+								{{r}}
+								<span v-show="typeof responseBody[e][r].ref !== 'undefined'">
+									<input type="checkbox"
+										@change="expandEntity($event.target.checked, responseBody[e][r].ref)" />
+								</span>
+							</div>
+						</li>
+					</ul>
+				</details>
+			</container>
 		</fieldset>
 	</div>
 
@@ -46,28 +65,52 @@
 		Vue.component('v-select', VueSelect.VueSelect);
 
 		var app = new Vue({
-  			el: '#app',
-  			data: {
-    			endpoint: '',
-    			endpointEntities: [],
-    			entities: ['doctor', 'patient', 'person', 'symptoms', 'diagnosis', 'appointment']
-  			},
-  			watch: {
-  				endpoint: function (n, o) {
-  					var tokens = n.split('/');
-  					if (tokens.length>0) {
-	  					var selected = [];
-	  					for (var i=0; i<=tokens.length; i++) {
-	  						if (this.entities.indexOf(tokens[i])>-1) {
-	  							selected.push(tokens[i]);
-	  						}
-	  					}
-	  					this.endpointEntities = selected;
-  					}
-  				}
-  			}
+			el: '#app',
+			data: {
+				endpoint: '',
+				endpointEntities: [],
+				entities: [],
+				schema: {},
+				requestQueries: [],
+				requestQueryOptions: [],
+				responseBody: {}
+			},
+			created: function () {
+				var that = this;
+				$.get('schema.json', function (data) {
+					that.schema = data;
+					that.entities = Object.keys(data);
+				});
+			},
+			watch: {
+				endpoint: function (n, o) {
+					var tokens = n.split('/');
+					if (tokens.length > 0) {
+						var endpointEntities = [];
+						for (var i = 0; i <= tokens.length; i++) {
+							if (this.entities.indexOf(tokens[i]) > -1) {
+								endpointEntities.push(tokens[i]);
+							}
+						}
+						this.endpointEntities = endpointEntities;
+					}
+				},
+				endpointEntities: function (n, o) {
+					var requestQueryOptions = []
+					var responseBody = {};
+					for (var i = 0; i < n.length; i++) {
+						if (Object.keys(this.schema).indexOf(n[i]) > -1) {
+							responseBody[n[i]] = this.schema[n[i]];
+							requestQueryOptions = requestQueryOptions.concat(Object.keys(this.schema[n[i]]));
+						}
+					}
+					this.requestQueryOptions = requestQueryOptions;
+					this.responseBody = responseBody;
+				}
+			}
 		});
 	</script>
 
 </body>
+
 </html>
